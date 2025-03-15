@@ -87,6 +87,8 @@ CUDA_VISIBLE_DEVICES=0 python generate.py \
     --model_offload \                                           # Enable basic model offloading to CPU to reduce GPU memory usage (recommended, requires ~23.7GB VRAM)
     # --sequential_offload \                                    # Enable more aggressive sequential offloading (saves more memory but much slower, requires < 1GB VRAM)
     # --disable_gemini_prompt \                                 # Disable Gemini prompt enhancement, not recommended unless you have a very detailed prompt
+    # --height 512 \                                            # Height of the output image (higher values may cause image distortions)
+    # --width 1024                                              # Width of the output image (higher values may cause image distortions)
 ```
 For <24GB GPU memory, consider using the `--model_offload` or `--sequential_offload` option.
 

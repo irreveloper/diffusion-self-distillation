@@ -186,4 +186,4 @@ def resize_and_center_crop(image: Image.Image, target_height: int = 512, target_
 
 if __name__ == "__main__":
     main()
-    # C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\python_embeded\python.exe generate.py --model_path C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI\models\dsd_model\transformer --lora_path C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI\models\dsd_model\pytorch_lora_weights.safetensors --image_path C:\Users\emreb\Downloads\image.webp --text "this character sitting on a chair" --output_path output.png
+    # CUDA_VISIBLE_DEVICES=7 python generate.py --model_path /home/shengqu/repos/SimpleTuner/output/1x2_v1/checkpoint-172000/transformer --lora_path /home/shengqu/repos/SimpleTuner/output/1x2_v1/checkpoint-172000/pytorch_lora_weights.safetensors --image_path /home/shengqu/repos/dreambench_plus/conditioning_images/seededit_example.png --text "this character sitting on a chair" --output_path output.png --height 512 --width 1024
