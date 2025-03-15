@@ -779,9 +779,8 @@ class FluxConditionalPipeline(DiffusionPipeline, SD3LoraLoaderMixin):
         # 3. Preprocess image
         image = self.image_processor.preprocess(image)
         # image = image[..., :512]
-        image = torch.nn.functional.interpolate(image, size=512)
-        assert isinstance(image, torch.Tensor)
-        black_image = torch.full((1, 3, 512, 512), -1.0)
+        image = torch.nn.functional.interpolate(image, size=(height, width // 2))
+        black_image = torch.full((1, 3, height, width // 2), -1.0)
         image = torch.cat([image, black_image], dim=3)
         latents_cond = self.vae.encode(image.to(dtype=self.vae.dtype).to(device)).latent_dist.sample()
         latents_cond = (

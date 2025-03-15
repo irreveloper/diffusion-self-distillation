@@ -5,26 +5,19 @@ from diffusers.utils import load_image
 
 from transformers import AutoModelForCausalLM
 
+import sys
+sys.path.append(".")
+
 from pipeline import FluxConditionalPipeline
 from transformer import FluxTransformer2DConditionalModel
 
 
 def process_image_and_text(
-    pipe, image, text, gemini_prompt, guidance, i_guidance, t_guidance, steps
+    pipe, image, text, gemini_prompt, guidance, i_guidance, t_guidance, steps, height, width
 ):
     """Process the given image and text using the global pipeline."""
-    # center-crop image
-    w, h = image.size
-    min_size = min(w, h)
-    image = image.crop(
-        (
-            (w - min_size) // 2,
-            (h - min_size) // 2,
-            (w + min_size) // 2,
-            (h + min_size) // 2,
-        )
-    )
-    image = image.resize((512, 512))
+    
+    image = resize_and_center_crop(image, height, width//2)
 
     control_image = load_image(image)
 
@@ -36,8 +29,8 @@ def process_image_and_text(
         prompt=text.strip().replace("\n", "").replace("\r", ""),
         negative_prompt="",
         num_inference_steps=steps,
-        height=512,
-        width=1024,
+        height=height,
+        width=width,
         guidance_scale=guidance,
         image=control_image,
         guidance_scale_real_i=i_guidance,
@@ -86,6 +79,13 @@ def parse_args():
         default="output.png",
         help="Path to save the output image.",
     )
+    #height and width
+    parser.add_argument(
+        "--height", type=int, default=512, help="Height of the output image."
+    )
+    parser.add_argument(
+        "--width", type=int, default=1024, help="Width of the output image."
+    )
     parser.add_argument(
         "--sequential_offload",
         action="store_true",
@@ -95,6 +95,7 @@ def parse_args():
         "--model_offload", action="store_true", help="Offload full models"
     )
     parser.add_argument("--steps", type=int, default=28, help="Steps to generate")
+    
 
     return parser.parse_args()
 
@@ -110,10 +111,14 @@ def main():
         args.model_path, torch_dtype=torch.bfloat16, ignore_mismatched_sizes=True
     )
     pipe = FluxConditionalPipeline.from_pretrained(
-        "black-forest-labs/FLUX.1-dev",
+        "black-forest-labs/FLUX.1-schnell",
         transformer=transformer,
         torch_dtype=torch.bfloat16,
     )
+    
+    pipe.scheduler.config.shift = 3
+    pipe.scheduler.config.use_dynamic_shifting = True
+    
     assert isinstance(pipe, FluxConditionalPipeline)
     pipe.load_lora_weights(args.lora_path)
     if args.model_offload:
@@ -137,7 +142,9 @@ def main():
         args.guidance,
         args.i_guidance,
         args.t_guidance,
-        args.steps
+        args.steps,
+        args.height,
+        args.width
     )
 
     # Save the output
@@ -145,6 +152,38 @@ def main():
     print(f"Output saved to {args.output_path}")
 
 
+def resize_and_center_crop(image: Image.Image, target_height: int = 512, target_width: int = 512) -> Image.Image:
+
+    
+    # Handle PIL Image
+    w, h = image.size
+    min_size = min(w, h)
+
+    # Calculate target aspect ratio
+    target_ratio = target_width / target_height
+    # Calculate current aspect ratio
+    current_ratio = w / h
+
+    # Resize to match target width or height while preserving aspect ratio
+    if current_ratio > target_ratio:
+        # Image is wider than target - resize by height
+        new_height = target_height
+        new_width = int(w * (target_height / h))
+    else:
+        # Image is taller than target - resize by width
+        new_width = target_width
+        new_height = int(h * (target_width / w))
+
+    image = image.resize((new_width, new_height), Image.BILINEAR)
+
+    # Center crop the image to the target size
+    cropped = image.crop(((new_width - target_width) // 2, 
+                         (new_height - target_height) // 2, 
+                         (new_width + target_width) // 2, 
+                         (new_height + target_height) // 2))
+
+    return cropped
+
 if __name__ == "__main__":
     main()
-    # CUDA_VISIBLE_DEVICES=7 python generate.py --model_path /home/shengqu/repos/SimpleTuner/output/1x2_v1/checkpoint-172000/transformer --lora_path /home/shengqu/repos/SimpleTuner/output/1x2_v1/checkpoint-172000/pytorch_lora_weights.safetensors --image_path /home/shengqu/repos/dreambench_plus/conditioning_images/seededit_example.png --text "this character sitting on a chair" --output_path output.png
+    # C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\python_embeded\python.exe generate.py --model_path C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI\models\dsd_model\transformer --lora_path C:\Users\emreb\ComfyUI_windows_portable_nvidia\ComfyUI_windows_portable\ComfyUI\models\dsd_model\pytorch_lora_weights.safetensors --image_path C:\Users\emreb\Downloads\image.webp --text "this character sitting on a chair" --output_path output.png
