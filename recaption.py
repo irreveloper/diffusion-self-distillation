@@ -1,7 +1,13 @@
 from google import genai
-
+import os
 
 def enhance_prompt(image, prompt):
+    
+    api_key = os.getenv("GEMINI_API_KEY")
+    
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY is not set")
+    
     # input_caption_prompt = "Please provide a prompt for the image for Diffusion Model text-to-image generative model training, i.e. for FLUX or StableDiffusion 3. The prompt should be a detailed description of the image, including the character/asset/item, the environment, the pose, the lighting, the camera view, etc. The prompt should be detailed enough to generate the image. The prompt should be as short and precise as possible, in one-line format, and does not exceed 77 tokens."
     input_caption_prompt = (
         "Please provide a prompt for a Diffusion Model text-to-image generative model for the image I will give you. "
@@ -13,11 +19,11 @@ def enhance_prompt(image, prompt):
         "The prompt should be short and precise, in one-line format, and does not exceed 77 tokens."
         "The prompt should be individually coherent as a description of the image."
     )
+    
+
 
     # Choose a Gemini model.
-    caption_model = genai.Client(
-        vertexai=True, project="sci-gcp", location="us-west1"
-    )
+    caption_model = genai.Client(api_key=api_key)
     input_image_prompt = caption_model.models.generate_content(
         model='gemini-1.5-flash', contents=[input_caption_prompt, image]).text
     input_image_prompt = input_image_prompt.replace('\r', '').replace('\n', '')
@@ -35,5 +41,3 @@ def enhance_prompt(image, prompt):
     print("prompt: ", prompt)
     print("enhanced_prompt: ", enhanced_prompt)
     return enhanced_prompt
-
-# print(enhance_prompt("/home/shengqu/repos/dreambench_plus/data/images/live_subject/human/00.jpg", "A space ranger floating through a nebula, with stars reflecting in the visor of his helmet."))

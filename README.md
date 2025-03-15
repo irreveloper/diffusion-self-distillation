@@ -75,6 +75,7 @@ Download our pretrained models from [Hugging Face](https://huggingface.co/primec
 To generate subject-preserving images, simply run:
 
 ```bash
+export GEMINI_API_KEY="your_api_key_here"  # Optional: Set this if you want to use Gemini prompt enhancement. https://aistudio.google.com/app/apikey
 CUDA_VISIBLE_DEVICES=0 python generate.py \
     --model_path /PATH/TO/transformer \                         # Path to the 'transformer' folder
     --lora_path /PATH/TO/pytorch_lora_weights.safetensors \     # Path to the 'pytorch_lora_weights.safetensors' file
@@ -86,7 +87,7 @@ CUDA_VISIBLE_DEVICES=0 python generate.py \
     --t_guidance 1.0 \                                          # True text guidance scale, set to >1.0 if you want to enhance the text conditioning
     --model_offload \                                           # Enable basic model offloading to CPU to reduce GPU memory usage (recommended, requires ~23.7GB VRAM)
     # --sequential_offload \                                    # Enable more aggressive sequential offloading (saves more memory but much slower, requires < 1GB VRAM)
-    # --disable_gemini_prompt \                                 # Disable Gemini prompt enhancement, not recommended unless you have a very detailed prompt
+    # --disable_gemini_prompt \                                 # Disable Gemini prompt enhancement, not recommended unless you have a very detailed prompt.
     # --height 512 \                                            # Height of the output image (higher values may cause image distortions)
     # --width 1024                                              # Width of the output image (higher values may cause image distortions)
 ```
